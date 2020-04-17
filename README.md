@@ -60,7 +60,7 @@ python encode_spm.py -m sp_models/europarl-v7.fr-en.fr.model -i data/test.mtnt.f
 1. Training the model.
 ```
 python vocab.py --train-src=data/train.tok.fr --train-tgt=data/train.tok.en data/vocab-bpe.bin --freq-cutoff 0
-python nmt.py train --train-src="data/train.tok.fr" --train-tgt="data/train.tok.en" --dev-src="data/dev/dev.tok.fr" --dev-tgt="data/dev/dev.tok.en" --vocab="data/vocab.bin" --save-to="work_dir/" --valid-niter=1000 --batch-size=32 --hidden-size=256 --embed-size=512  --optim=1 --max-epoch=30 --uniform-init=0.1 --dropout=0.3 --lr=0.01 --clip-grad=20 --lr-decay=0.5 --patience=3 --tie-weights=1 --n_layers=2
+python nmt.py train --train-src="data/train.tok.fr" --train-tgt="data/train.tok.en" --dev-src="data/dev/dev.tok.fr" --dev-tgt="data/dev/dev.tok.en" --vocab="data/vocab-bpe.bin" --save-to="work_dir/" --valid-niter=1000 --batch-size=22 --hidden-size=256 --embed-size=512  --optim=1 --max-epoch=30 --uniform-init=0.1 --dropout=0.3 --lr=0.01 --clip-grad=20 --lr-decay=0.5 --patience=3 --tie-weights=1 --n_layers=2
 ```
 
 2. Decoding on the dev set, once the model is trained. Replace the model file name with the correct name.

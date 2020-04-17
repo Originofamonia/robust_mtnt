@@ -55,7 +55,8 @@ from docopt import docopt
 from tqdm import tqdm
 from nltk.translate.bleu_score import corpus_bleu, sentence_bleu, SmoothingFunction
 
-from utils import read_corpus, batch_iter, get_batch_tensor, get_mask, to_variable, get_pre_trained_embeddings, to_tensor
+from utils import read_corpus, batch_iter, get_batch_tensor, get_mask, to_variable, get_pre_trained_embeddings, \
+    to_tensor
 from vocab import Vocab, VocabEntry
 import torch.nn as nn
 import torch
@@ -202,7 +203,7 @@ class Encoder(nn.Module):
         self.embed = nn.Embedding(num_embeddings=src_vocab_size, embedding_dim=embedding_dimension)
         if pte is None:
             # Xavier initialization
-            nn.init.xavier_uniform(self.embed.weight)
+            nn.init.xavier_uniform_(self.embed.weight)
         else:
             # Initialize embedding weights with appropriate pre-trained word embeddings
             self.embed.weight.data.copy_(torch.from_numpy(pte))
@@ -254,7 +255,7 @@ class Decoder(nn.Module):
         self.hidden_size = hidden_dimension
         self.embedding_dim = embedding_dimension
         self.embed = nn.Embedding(num_embeddings=output_size, embedding_dim=self.hidden_size)
-        nn.init.xavier_uniform(self.embed.weight)
+        nn.init.xavier_uniform_(self.embed.weight)
         self.n_layers = n_layers
         self.mha = mha
         self.lstm_cells = nn.ModuleList([MyLSTMCell(input_size=2 * self.hidden_size, hidden_size=self.hidden_size)])
@@ -389,7 +390,8 @@ class Decoder(nn.Module):
                                                                          top_new_hypothesis_scores.cpu().data):
 
                 # Append the top k hypothesis to the existing list
-                hyp_tgt_words = hypotheses[prev_hypothesis_id] + [(word_id, np.argmax(attn[prev_hypothesis_id][0].data.cpu().numpy()))]
+                hyp_tgt_words = hypotheses[prev_hypothesis_id] + [
+                    (word_id, np.argmax(attn[prev_hypothesis_id][0].data.cpu().numpy()))]
                 if word_id == 2:
                     finished_hypotheses.append(hyp_tgt_words)
                     finished_hypotheses_scores.append(new_hypothesis_score)
@@ -534,11 +536,11 @@ def train(args: Dict[str, str], vocab):
         model = model.cuda()
         loss_fn = loss_fn.cuda()
     best_model_file = ''
-    
+
     # Load weights from saved model for finetuning
     if args['--load-weights-from'] is not None:
         model.load(args['--load-weights-from'])
-    
+
     for epoch in tqdm(range(1, int(args['--max-epoch']) + 1)):
         for src_sents, tgt_sents in batch_iter(train_data, batch_size=train_batch_size, shuffle=True):
             train_iter += 1
@@ -567,7 +569,7 @@ def train(args: Dict[str, str], vocab):
 
             if clip_grad > 0:
                 # Clip gradients
-                torch.nn.utils.clip_grad_norm(model.parameters(), clip_grad)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), clip_grad)
             optimizer.step()  # Update the network
 
             report_loss += loss_val
@@ -580,15 +582,15 @@ def train(args: Dict[str, str], vocab):
             cumulative_examples += batch_size
 
             if train_iter % log_every == 0:
-                tqdm.write('epoch %d, iter %d, avg. loss %.2f, avg. ppl %.2f ' \
-                           'cum. examples %d, speed %.2f words/sec, time elapsed %.2f sec' % (epoch, train_iter,
-                                                                                              report_loss / report_examples,
-                                                                                              math.exp(
-                                                                                                  report_loss / report_tgt_words),
-                                                                                              cumulative_examples,
-                                                                                              report_tgt_words / (
-                                                                                              time.time() - train_time),
-                                                                                              time.time() - begin_time),
+                tqdm.write('epoch %d, iter %d, avg. loss %.2f, avg. ppl %.2f cum. examples %d, speed %.2f words/sec,'
+                           ' time elapsed %.2f sec' % (epoch, train_iter,
+                                                       report_loss / report_examples,
+                                                       math.exp(
+                                                           report_loss / report_tgt_words),
+                                                       cumulative_examples,
+                                                       report_tgt_words / (
+                                                               time.time() - train_time),
+                                                       time.time() - begin_time),
                            file=sys.stderr)
 
                 train_time = time.time()
@@ -601,11 +603,12 @@ def train(args: Dict[str, str], vocab):
             # saved best model (and the state of the optimizer), halve the learning rate and continue
             # training. This repeats for up to `--max-num-trial` times.
             if train_iter % valid_niter == 0:
-                tqdm.write('epoch %d, iter %d, cum. loss %.2f, cum. ppl %.2f cum. examples %d' % (epoch, train_iter,
-                                                                                                  cum_loss / cumulative_examples,
-                                                                                                  np.exp(
-                                                                                                      cum_loss / cumulative_tgt_words),
-                                                                                                  cumulative_examples),
+                tqdm.write('epoch %d, iter %d, cum. loss %.2f, cum. ppl %.2f cum. examples '
+                           '%d' % (epoch, train_iter,
+                                   cum_loss / cumulative_examples,
+                                   np.exp(
+                                       cum_loss / cumulative_tgt_words),
+                                   cumulative_examples),
                            file=sys.stderr)
 
                 cum_loss = cumulative_examples = cumulative_tgt_words = 0.
@@ -678,7 +681,7 @@ def decode(args: Dict[str, str], vocab):
     if args['TEST_TARGET_FILE']:
         test_data_tgt = read_corpus(args['TEST_TARGET_FILE'], source='tgt')
 
-    print(f"load model from {args['MODEL_PATH']}", file=sys.stderr)
+    print("load model from {args['MODEL_PATH']}", file=sys.stderr)
     model = NMT(embed_size=int(args['--embed-size']),
                 hidden_size=int(args['--hidden-size']),
                 dropout_rate=float(args['--dropout']),
@@ -697,7 +700,7 @@ def decode(args: Dict[str, str], vocab):
     if args['TEST_TARGET_FILE']:
         top_hypotheses = [hyps[0] for hyps in hypotheses]
         bleu_score = compute_corpus_level_bleu_score(test_data_tgt, top_hypotheses)
-        print(f'Corpus BLEU: {bleu_score}', file=sys.stderr)
+        print('Corpus BLEU: {bleu_score}', file=sys.stderr)
 
     with open(args['OUTPUT_FILE'], 'w') as f:
         for src_sent, hyps in zip(test_data_src, hypotheses):
@@ -719,7 +722,7 @@ def main():
     elif args['decode']:
         decode(args, vocab)
     else:
-        raise RuntimeError(f'invalid mode')
+        raise RuntimeError('invalid mode')
 
 
 if __name__ == '__main__':

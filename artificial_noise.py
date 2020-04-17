@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-# usage: 
-# python artificial_noise.py "test.fr" "test.en" "test-noisy.fr" "test-noisy.en"  "0.04,0.007,0.002,0.015" <----(Spl = 0.04, Prof = 0.007, Emo = 0.002, grammar = 0.015)
+# -*- coding: utf-8 -*- usage: python artificial_noise.py "test.fr" "test.en" "test-noisy.fr" "test-noisy.en"  "0.04,
+# 0.007,0.002,0.015" <----(Spl = 0.04, Prof = 0.007, Emo = 0.002, grammar = 0.015)
 import emoji
 import sys
 # from stop_words import get_stop_words
 import codecs
 import numpy as np
-
 
 SWEAR_FILE = "./swear_words.txt"
 FR_EN_STOPS = "./fr_en_stops.txt"
@@ -60,7 +58,7 @@ def add_err_emo(fr_word, en_word):
 def add_err_gram(fr_word, en_word):
     fr_en_stop_pairs = []
     # there aren't many swears in the file, so read into a list
-    with codecs.open(FR_EN_STOPS,'r',encoding='utf-8') as f:
+    with codecs.open(FR_EN_STOPS, 'r', encoding='utf-8') as f:
         for line in f.readlines():
             fr_en_stop_pairs.append(line)
             # swear_choice = np.random.choice(np.arange(0, len(swear_pairs)))
@@ -71,6 +69,7 @@ def add_err_gram(fr_word, en_word):
     fr_word += " " + fr_stop.strip()
     en_word += " " + en_stop.strip()
     return fr_word, en_word
+
 
 def add_noise(input_file_src, input_file_tgt, output_file_src, output_file_tgt, noise_proba, noise_funcs):
     with codecs.open(input_file_src, 'r', encoding='utf-8') as f_src_in, \
@@ -90,17 +89,18 @@ def add_noise(input_file_src, input_file_tgt, output_file_src, output_file_tgt, 
                     #     print(noise_id)
                 noisy_fr.append(fr_word.strip())
                 noisy_en.append(en_word.strip())
-                word_posn+=1
+                word_posn += 1
             # print("fr: {} en:{}".format(noisy_fr,noisy_en))
             if len(fr_line) > len(en_line):
                 # add remaining words in fr
-                fr_remaining = fr_line.split()[word_posn:len(fr_line)-1]
+                fr_remaining = fr_line.split()[word_posn:len(fr_line) - 1]
                 noisy_fr += fr_remaining
             else:
                 en_remaining = en_line.split()[word_posn:len(en_line) - 1]
                 noisy_en += en_remaining
             f_src_out.write(" ".join(noisy_fr) + "\n")
             f_tgt_out.write(" ".join(noisy_en) + "\n")
+
 
 if __name__ == "__main__":
     input_file_src = sys.argv[1]

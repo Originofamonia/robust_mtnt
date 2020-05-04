@@ -134,7 +134,7 @@ class NMT(nn.Module):
                 if x[0] == 3 and x[1] < len(src_sent):
                     sentence.append(src_sent[x[1]])
                 else:
-                    sentence.append(self.vocab.tgt.id2word[x[0]])
+                    sentence.append(self.vocab.tgt.id2word[x[0].item()])
             all_hypotheses.append(Hypothesis(sentence, hypotheses[i][1]))
         return all_hypotheses
 

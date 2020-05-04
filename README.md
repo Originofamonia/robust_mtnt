@@ -30,6 +30,15 @@ tar xvzf MTNT.1.0.tar.gz
 ```
 
 3. Preparing the data for training and testing includes selecting sentences of length less than 50, selecting subset of data and removing html tags
+
+1 ~ 2: data/dev/newsdiscussdev2015-fren-ref.en.sgm is en sentences with tags. data/dev/dev.en is en clean sentences without tags (1500 sentences). Similarly for data/dev/newsdiscussdev2015-fren-src.fr.sgm and data/dev/dev.fr.
+
+3: prune sentences in data/europarl-v7.fr-en.fr and data/europarl-v7.fr-en.en <= len(50) and write to data/europarl-v7-50.fr-en.fr and data/europarl-v7-50.fr-en.en.
+
+4 ~ 5: obtain the first 1000000 lines from data/europarl-v7-50.fr-en.fr and data/europarl-v7-50.fr-en.en and output to train.fr and train.en.
+
+All the rest cuts: MTNT/train/train.fr-en.tsv contains both fr and en sentences in pairs. It cuts by '\t' to keep only one lang.
+
 ```
 cd ../
 sed '/<seg/!d' data/dev/newsdiscussdev2015-fren-ref.en.sgm | sed -e 's/\s*<[^>]*>\s*//g' > data/dev/dev.en
@@ -46,6 +55,8 @@ cut -f2 -d$'\t' MTNT/test/test.fr-en.tsv > test.mtnt.fr
 ```
 
 4. Use spe encoding to create sub-word data. Highly recommended ! Below command assumes you have spe models placed in _sp_models/_, specifically, _europarl-v7.fr-en.en.model_ and _europarl-v7.fr-en.fr.model_. We have provided these files in the repository with vocab size 16k.
+
+convert each word in both fr and en sentences into '_word'.
 ```
 python encode_spm.py -m sp_models/europarl-v7.fr-en.fr.model -i data/train.fr -o data/train.tok.fr
 python encode_spm.py -m sp_models/europarl-v7.fr-en.en.model -i data/train.en -o data/train.tok.en
@@ -58,6 +69,8 @@ python encode_spm.py -m sp_models/europarl-v7.fr-en.fr.model -i data/test.mtnt.f
 ### Steps for training the baseline model:
  
 1. Training the model.
+
+1: build a binary file to speedup.
 ```
 python vocab.py --train-src=data/train.tok.fr --train-tgt=data/train.tok.en data/vocab-bpe.bin --freq-cutoff 0
 python nmt.py train --train-src="data/train.tok.fr" --train-tgt="data/train.tok.en" --dev-src="data/dev/dev.tok.fr" --dev-tgt="data/dev/dev.tok.en" --vocab="data/vocab-bpe.bin" --save-to="work_dir/" --valid-niter=1000 --batch-size=22 --hidden-size=256 --embed-size=512  --optim=1 --max-epoch=30 --uniform-init=0.1 --dropout=0.3 --lr=0.01 --clip-grad=20 --lr-decay=0.5 --patience=3 --tie-weights=1 --n_layers=2

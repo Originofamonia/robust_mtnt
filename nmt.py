@@ -232,7 +232,7 @@ class Encoder(nn.Module):
         for j in range(self.n_layers):
             idx = j * 2
             dec_init_cells.append(self.decoder_init(torch.cat([last_cell[idx], last_cell[idx + 1]], 1)))
-            dec_init_states.append(F.tanh(dec_init_cells[j]))
+            dec_init_states.append(torch.tanh(dec_init_cells[j]))
         return keys, values, (dec_init_states, dec_init_cells)
 
 
@@ -526,7 +526,7 @@ def train(args: Dict[str, str], vocab):
     train_time = begin_time = time.time()
     print('Begin Maximum Likelihood training:')
 
-    loss_fn = torch.nn.CrossEntropyLoss(reduce=False)
+    loss_fn = torch.nn.CrossEntropyLoss(reduction='none')
     # TODO: Add weight decay, momentum later
     if int(args['--optim']) == 0:
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-5)

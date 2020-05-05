@@ -200,6 +200,7 @@ class Encoder(nn.Module):
         self.hidden_size = hidden_dimension
         self.n_layers = n_layers
         self.embedding_dim = embedding_dimension
+        # embed: lookup table. map each word to a vector with embedding_dimension length.
         self.embed = nn.Embedding(num_embeddings=src_vocab_size, embedding_dim=embedding_dimension)
         if pte is None:
             # Xavier initialization
@@ -379,7 +380,7 @@ class Decoder(nn.Module):
             top_new_hypothesis_scores, top_new_hypotheses_pos = torch.topk(new_hypothesis_scores,
                                                                            k=remaining_no_of_hypotheses)
             # Book keeping for tracking the word ids
-            prev_hypotheses_ids = top_new_hypotheses_pos / self.vocab
+            prev_hypotheses_ids = top_new_hypotheses_pos // self.vocab
             word_ids = top_new_hypotheses_pos % self.vocab
 
             new_hypotheses = []
@@ -390,8 +391,8 @@ class Decoder(nn.Module):
                                                                          top_new_hypothesis_scores.cpu().data):
 
                 # Append the top k hypothesis to the existing list
-                hyp_tgt_words = hypotheses[prev_hypothesis_id] + [
-                    (word_id, np.argmax(attn[prev_hypothesis_id][0].data.cpu().numpy()))]
+                hyp_tgt_words = hypotheses[prev_hypothesis_id] + \
+                                [(word_id, np.argmax(attn[prev_hypothesis_id][0].data.cpu().numpy()))]
                 if word_id == 2:
                     finished_hypotheses.append(hyp_tgt_words)
                     finished_hypotheses_scores.append(new_hypothesis_score)
@@ -486,12 +487,13 @@ def init_xavier(m):
 
 
 def train(args: Dict[str, str], vocab):
+    # list of sentences
     train_data_src = read_corpus(args['--train-src'], source='src')
     train_data_tgt = read_corpus(args['--train-tgt'], source='tgt')
 
     dev_data_src = read_corpus(args['--dev-src'], source='src')
     dev_data_tgt = read_corpus(args['--dev-tgt'], source='tgt')
-
+    # list of tuples
     train_data = list(zip(train_data_src, train_data_tgt))
     dev_data = list(zip(dev_data_src, dev_data_tgt))
 
@@ -509,14 +511,9 @@ def train(args: Dict[str, str], vocab):
                                                             args['--save-emb-as'], int(args['--embed-size']),
                                                             vocab.src)
 
-    model = NMT(embed_size=int(args['--embed-size']),
-                hidden_size=int(args['--hidden-size']),
-                dropout_rate=float(args['--dropout']),
-                n_layers=int(args['--n_layers']),
-                vocab=vocab,
-                tie_weights=int(args['--tie-weights']),
-                mha=int(args['--mha']),
-                pte=pre_trained_embeddings)
+    model = NMT(embed_size=int(args['--embed-size']), hidden_size=int(args['--hidden-size']),
+                dropout_rate=float(args['--dropout']), n_layers=int(args['--n_layers']), vocab=vocab,
+                tie_weights=int(args['--tie-weights']), mha=int(args['--mha']), pte=pre_trained_embeddings)
 
     model.apply(init_xavier)
     num_trial = 0
@@ -662,7 +659,7 @@ def train(args: Dict[str, str], vocab):
 def beam_search(model: NMT, test_data_src: List[List[str]], beam_size: int, max_decoding_time_step: int) -> List[
     List[Hypothesis]]:
     hypotheses = []
-    decoded_file_with_scores = open("work_dir/decode_with_scores.txt", 'w')
+    decoded_file_with_scores = open("work_dir/decode_with_scores.txt", 'w', encoding='utf-8')
     for src_sent in tqdm(test_data_src, desc='Decoding', file=sys.stdout):
         example_hyps = model.beam_search(src_sent, beam_size=beam_size, max_decoding_time_step=max_decoding_time_step)
         hypotheses.append(example_hyps)
@@ -702,7 +699,7 @@ def decode(args: Dict[str, str], vocab):
         bleu_score = compute_corpus_level_bleu_score(test_data_tgt, top_hypotheses)
         print('Corpus BLEU: {bleu_score}', file=sys.stderr)
 
-    with open(args['OUTPUT_FILE'], 'w') as f:
+    with open(args['OUTPUT_FILE'], 'w', encoding='utf-8') as f:
         for src_sent, hyps in zip(test_data_src, hypotheses):
             top_hyp = hyps[0]
             hyp_sent = ' '.join(top_hyp.value)
@@ -716,6 +713,7 @@ def main():
     # also want to seed the RNG of tensorflow, pytorch, dynet, etc.
     seed = int(args['--seed'])
     np.random.seed(seed * 13 // 7)
+    # vocab is two dicts for src and target langs. Each dict contains id2word and word2id dicts.
     vocab = pickle.load(open(args['--vocab'], 'rb'))
     if args['train']:
         train(args, vocab)

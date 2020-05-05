@@ -78,7 +78,7 @@ python nmt.py train --train-src="data/train.tok.fr" --train-tgt="data/train.tok.
 
 2. Decoding on the dev set, once the model is trained. Replace the model file name with the correct name.
 ```
-python nmt.py decode --beam-size=5 --max-decoding-time-step=100 --embed-size=512 --tie-weights=1 --n_layers=2 --vocab="data/vocab-bpe.bin" "work_dir/model_epoch.t7" "data/dev/dev/dev.tok.fr" "work_dir/decode-fr-en.tok.txt"
+python nmt.py decode --beam-size=5 --max-decoding-time-step=100 --embed-size=512 --tie-weights=1 --n_layers=2 --vocab="data/vocab-bpe.bin" "work_dir/model_epoch.t7" "data/dev/dev.tok.fr" "work_dir/decode-fr-en.tok.txt"
 python decode_spm.py -m sp_models/europarl-v7.fr-en.en.model -i work_dir/decode-fr-en.tok.txt -o work_dir/decode-fr-en.txt
 ```
 

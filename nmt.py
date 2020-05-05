@@ -579,7 +579,7 @@ def train(args: Dict[str, str], vocab):
             cumulative_examples += batch_size
 
             if train_iter % log_every == 0:
-                tqdm.write('epoch %d, iter %d, avg. loss %.2f, avg. ppl %.2f cum. examples %d, speed %.2f words/sec,'
+                tqdm.write('epoch %d, iter %d, avg loss %.2f, avg ppl %.2f cum examples %d, speed %.2f words/sec,'
                            ' time elapsed %.2f sec' % (epoch, train_iter,
                                                        report_loss / report_examples,
                                                        math.exp(
